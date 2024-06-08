@@ -1,5 +1,11 @@
 const std = @import("std");
 
+const c = @cImport({
+    @cDefine("_GNU_SOURCE", {});
+    @cInclude("sched.h");
+    @cInclude("unistd.h");
+});
+
 pub fn main() !void {
     // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
     std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
@@ -7,13 +13,30 @@ pub fn main() !void {
     // stdout is for the actual output of your application, for example if you
     // are implementing gzip, then only the compressed bytes should be sent to
     // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
+    // const stdout_file = std.io.getStdOut().writer();
+    // var bw = std.io.bufferedWriter(stdout_file);
+    // const stdout = bw.writer();
 
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
+    _ = c.unshare(c.CLONE_NEWUSER | c.CLONE_NEWNS);
 
-    try bw.flush(); // don't forget to flush!
+    // c.execvp(__file: [*c]const u8, __argv: [*c]const [*c]u8)
+
+    // const args:  [*c]const [*c]u8 = undefined;
+    const arg0: [*:0]const u8 = "id";
+    _ = arg0;
+
+    const t = ?[*:0]const u8;
+    var args: [*:null]t = undefined;
+
+    const allocator = std.heap.page_allocator;
+    args = try allocator.alloc(t, 2);
+    args[0] = "id";
+
+
+    // _ = mem;
+    // _ = c.execvp("id", args);
+
+    // try bw.flush(); // don't forget to flush!
 }
 
 test "simple test" {
